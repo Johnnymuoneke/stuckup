@@ -13,7 +13,7 @@ export async function DELETE(request: Request, {id}:{id:string}){
 export async function PATCH(request:Request, {id}:{id:string}){
     try{
         const body = await request.json()
-
+ 
     const item=body.quantity
     ? await updateGroceryItemQuantity(id, body.quantity)
     : await setGroceryItempurchased(id, body.purchased ?? true)
