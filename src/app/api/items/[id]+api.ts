@@ -5,7 +5,7 @@ export async function DELETE(request: Request, {id}:{id:string}){
         await deleteGroceryItem(id)
         return Response.json({okay:true})
     } catch (error) {
-        const message = error instanceof Error ? error.message:"Failed to delete item",
+        const message = error instanceof Error ? error.message:"Failed to delete item"
         return Response.json({error:message}, {status:500})
     }
 }

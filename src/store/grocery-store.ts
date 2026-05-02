@@ -1,9 +1,10 @@
 import { POST } from "@/app/api/items/clear-purchased+api";
 import { groceryItems } from "@/lib/server/db/schema";
 import { Name } from "drizzle-orm";
+import { Alert } from "react-native";
 import { create } from "zustand"
 
-export type GroceryCategory = "Produce" | 'Dairy' | 'pantry' | 'snacks';
+export type GroceryCategory = "Produce" | 'Dairy' |"Bakery"| 'pantry' | 'snacks';
 export type GroceryPriority = 'low' | 'medium' | 'high';
 
 export type GroceryItem = {
@@ -11,7 +12,7 @@ export type GroceryItem = {
     name: string
     category: GroceryCategory
     quantity: number
-    purchased:boolean
+    purchased: boolean
     priority: GroceryPriority
 };
 
@@ -32,7 +33,7 @@ type GroceryStore = {
     error: string | null;
     loadItems: () => Promise<void>;
     addItem: (input: CreateItemInput) => Promise<GroceryItem | void>;
-    updateQuantity: (id: string, quantity:number) => Promise<void>;
+    updateQuantity: (id: string, quantity: number) => Promise<void>;
     togglepurchased: (id: string) => Promise<void>;
     removeItem: (id: string) => Promise<void>;
     clearPurchased: () => Promise<void>
@@ -67,7 +68,7 @@ export const useGroceryStore = create<GroceryStore>((set, get) => ({
                 method: "POST",
                 headers: { "content-Type": "application/json" },
                 body: JSON.stringify({
-                    Name: input.name,
+                    name: input.name,
                     category: input.category,
                     quantity: Math.max(1, input.quantity),
                     priority: input.priority
@@ -84,71 +85,72 @@ export const useGroceryStore = create<GroceryStore>((set, get) => ({
             set({ error: "Something went wrong" })
         }
     },
-    updateQuantity: async (id, quantity) =>{
-        const nextQuantity = Math.max(1,quantity)
-        set({error:null})
+    updateQuantity: async (id, quantity) => {
+        const nextQuantity = Math.max(1, quantity)
+        set({ error: null })
         try {
-            const res = await fetch(`/api/items/${id}`,{
-                method:"PATCH",
-                headers:{"content-type":"application/json"},
-                body:JSON.stringify({quantity:nextQuantity})
+            const res = await fetch(`/api/items/${id}`, {
+                method: "PATCH",
+                headers: { "content-type": "application/json" },
+                body: JSON.stringify({ quantity: nextQuantity })
             })
-            const payload= (await res.json()) as ItemResponse
-            if(!res.ok) throw new Error(`Request failed (${res.status})`)
-                set((state)=>({
-                    items:state.items.map((item)=>(item.id===id ? payload.item:item))
-                }))
+            const payload = (await res.json()) as ItemResponse
+            if (!res.ok) throw new Error(`Request failed (${res.status})`)
+            set((state) => ({
+                items: state.items.map((item) => (item.id === id ? payload.item : item))
+            }))
         } catch (error) {
             console.error("error updating quantity:", error)
-            set({error:'something went wrong'})
+            set({ error: 'something went wrong' })
         }
     },
     togglepurchased: async (id) => {
-        const currentItem = get().items.find((items)=>items.id===id)
-        if(!currentItem) return;
+        const currentItem = get().items.find((items) => items.id === id)
+        if (!currentItem) return;
 
         const nextPurchased = !currentItem.purchased
-        set({error:null})
+        set({ error: null })
         try {
-            const res =await fetch(`/api/items/${id},{
+            const res = await fetch(`/api/items/${id}`,{
                 method:"PATCH",
                 headers:{"Content-type":"application/json"},
-                body:JSON.stringify(purchased:nextPurchased})
-                }`)
+                body:JSON.stringify({purchased:nextPurchased})
+                })
 
-                const payload =(await res.json()) as ItemResponse
-                if(!res.ok) throw new Error(`Request failed (${res.status})`)
+            const payload = (await res.json()) as ItemResponse
+            if (!res.ok) throw new Error(`Request failed (${res.status})`)
 
-                    set((state)=>({
-                        items:state.items.map((item)=>(item.id===id ? payload.item : item)),
-                    }))           
+            set((state) => ({
+                items: state.items.map((item) => (item.id === id ? payload.item : item)),
+            }))
         } catch (error) {
             console.error("Error toggling purchased:", error)
-            set({error:'Something went wrong'})
+            set({ error: 'Something went wrong' })
         }
-     }, 
+    },
     removeItem: async (id) => {
-        set({error:null})
+        set({ error: null })
         try {
-           const res = await fetch(`/api/items/`,{method:'DELETE'});
-           if(!res.ok) throw new Error(`Request failed (${res.status}`);
-           
-           set((state)=>({items: state.items.filter((item)=> item.id !== id)}))
+            const res = await fetch(`/api/items/${id}`, { method: 'DELETE' });
+            if (!res.ok) throw new Error(`Request failed (${res.status}`);
+
+            set((state) => ({ items: state.items.filter((item) => item.id !== id) }))
         } catch (error) {
             console.error("Error removing item", error)
-            set({error:"something went wrong"})
+            set({ error: "something went wrong" })
         }
-     },
-    
-     clearPurchased: async()=>{
-        set({error:null})
+    },
+
+    clearPurchased: async () => {
+        set({ error: null })
         try {
-           const res = await fetch("/api/items/clear-purchased", {method:'POST'})
-           if(!res.ok) throw new Error(`Request failed (${res.status})`)
-            const items= get().items.filter((item)=> !item.purchased)
+            const res = await fetch("/api/items/clear-purchased", { method: 'POST' })
+            if (!res.ok) throw new Error(`Request failed (${res.status})`)
+            const items = get().items.filter((item) => !item.purchased)
+            
         } catch (error) {
             console.error("error clearing purchased:", error);
-            set({error: "Something went wrong"})
+            set({ error: "Something went wrong" })
         }
-     }
+    }
 }))
